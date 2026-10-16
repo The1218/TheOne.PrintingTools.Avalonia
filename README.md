@@ -8,7 +8,7 @@ Cross-platform desktop printing for Avalonia with local and HTTP/HTTPS PDF/image
 
 ## 安装
 
-当前版本为预览版：
+截至 2026-10-16，预览版 [1.0.0-preview.3](https://www.nuget.org/packages/TheOne.PrintingTools.Avalonia/1.0.0-preview.3) 已发布到 nuget.org，可正常安装和还原：
 
 ```sh
 dotnet add package TheOne.PrintingTools.Avalonia --version 1.0.0-preview.3
@@ -93,7 +93,9 @@ await Printing.PrintAsync(new[] { "a.jpg", "b.png", "c.jpg" }, new PrintSettings
 
 PDFium 原生依赖随 NuGet 部署，不需要安装 Office 或外部转换器。PDF 按需以 300 DPI 栅格化，大页面限制为 1600 万像素和单边 8192 像素；混合尺寸页面适配到首张纸张。导入后导出不保留原始矢量、可搜索文本或交互表单，暂不提供加密 PDF 密码输入。TXT、Word、HTML 不支持。
 
-当前为预览版：macOS 临时验证宿主的原生文件选择器曾出现 Open 按钮禁用，完整选择到预览流程需在实际应用宿主复核。Windows / Linux 原生运行与真实出纸尚未验证。“提交成功”表示交给系统打印服务，不保证设备已经出纸；提交结果不明确时不要自动重试。
+2026-10-16 已在 macOS arm64 使用全新缓存从 nuget.org 还原 `1.0.0-preview.3` 并构建 PreviewHost，0 警告、0 错误。公网 HTTPS PDF 内容与缩略图正常；5 张公网 PNG/JPEG/WebP 图片默认预览为 5 页，切换四宫格后为 2 页，彩色内容与顺序正确。线上验证使用托管宿主；此前本地包已完成 macOS arm64 NativeAOT 实跑，线上包未重复验证 NativeAOT。复验步骤见 [开发说明](https://github.com/The1218/TheOne.PrintingTools.Avalonia/blob/main/docs/DEVELOPMENT.md)。
+
+当前仍为预览版：macOS 临时验证宿主的原生文件选择器曾出现 Open 按钮禁用，本地文件选择到预览流程需在实际应用宿主复核。Windows / Linux 原生运行、真实出纸及沙箱部署尚未验证。“提交成功”表示交给系统打印服务，不保证设备已经出纸；提交结果不明确时不要自动重试。
 
 ## 示例与开发
 

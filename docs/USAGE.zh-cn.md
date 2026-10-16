@@ -2,6 +2,8 @@
 
 目标：.NET 10 / Avalonia 12.1.4。日常使用只需要记住一个入口：**打印源、可选配置、是否预览**。
 
+截至 2026-10-16，[1.0.0-preview.3](https://www.nuget.org/packages/TheOne.PrintingTools.Avalonia/1.0.0-preview.3) 已发布，可从 nuget.org 正常安装和还原。
+
 ## 先看这三个调用
 
 ```csharp
@@ -202,6 +204,10 @@ Windows 使用 GDI / 系统驱动；macOS 使用随包部署的 AppKit / PDFKit 
 
 已安装设备、驱动、系统打印服务和权限仍由宿主环境提供。App Sandbox、Flatpak、Snap 权限需另行验证。“已提交”不等于真实出纸；提交开始后取消为尽力操作，错误结果不明确时不要自动重试。PDF 导出取消可能留下不完整目标文件，临时打印文件会清理。
 
-PreviewHost 默认打开最简 MVVM 示例页：选择 PDF（单选）/ 图片（单张或多张）/ Visual / 报表 / 混合源，填写可选份数和打印机 ID，切换“先打开预览”，点击“打印”。ViewModel 只调用注入的 `IPrintService.PrintAsync`；View 只提供文件选择和控件来源。打印解析与释放全部由库负责。取消选择或选择失败保留原来源，操作过程中禁止重入。
+PreviewHost 默认打开最简 MVVM 示例页：选择 PDF（单选）/ 图片（单张或多张）/ 网络 URL / Visual / 报表 / 混合源，填写可选份数和打印机 ID，切换“先打开预览”，点击“打印”。网络 URL 每行一个，先点击“使用网络源”再打印。ViewModel 只调用注入的 `IPrintService.PrintAsync`；View 提供原生文件选择和控件来源，URL 输入绑定 ViewModel。打印解析与释放全部由库负责。取消选择或选择失败保留原来源，操作过程中禁止重入。
+
+2026-10-16 已在 macOS arm64 使用全新缓存从 nuget.org 还原 `1.0.0-preview.3`，PreviewHost Release 构建 0 警告、0 错误。真实窗口验证公网 HTTPS PDF 正文及缩略图正常，5 张公网 PNG/JPEG/WebP 图片由默认 5 页切换四宫格后为 2 页，彩色内容和顺序正确。验证仅打开并取消预览，未提交真实打印任务。
+
+本次线上包验证使用托管宿主；此前本地包已完成 macOS arm64 NativeAOT 实跑，线上包未重复验证 NativeAOT。Windows / Linux 原生运行、真实出纸和沙箱部署尚未验证。macOS 临时宿主的原生文件选择器曾出现 Open 禁用，网络 URL 预览通过不代表该本地文件选择问题已解决。
 
 PreviewHost 保留最简 MVVM 示例；历史专项验证入口已移除。本地 NuGet 消费和 NativeAOT 命令见 [开发说明](DEVELOPMENT.md)。Debug / Release 保持 WinExe。

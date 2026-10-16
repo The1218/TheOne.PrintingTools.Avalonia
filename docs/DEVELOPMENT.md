@@ -14,6 +14,47 @@ PreviewHost 的 Debug / Release 均为 WinExe。入口为 `Program.cs`，示例�
 
 PreviewHost 仅保留固定版本 PackageReference，不提供源码 ProjectReference 或引用模式开关，也不导入库包版本配置。普通还原、构建和运行均消费 NuGet 包；库源码改动不会自动进入演示。
 
+## 线上包状态与复验
+
+截至 2026-10-16，[1.0.0-preview.3](https://www.nuget.org/packages/TheOne.PrintingTools.Avalonia/1.0.0-preview.3) 已完成发布、验证和索引，可从 nuget.org 正常还原。PreviewHost 固定消费此版本。线上包的源码提交与发布信息见 [发布说明](PUBLISHING.md)。
+
+本次使用全新 NUGET_PACKAGES 目录、禁用 HTTP 缓存并清空回退目录，显式指定官方源。下载包的 `.nupkg.metadata` 确认来源为 `https://api.nuget.org/v3/index.json`，assets 中本库类型为 package；构建输出 DLL 与线上包内 DLL 完全一致。
+
+| macOS arm64 线上包验证 | 结果 |
+| --- | --- |
+| PreviewHost Release 还原与构建 | 成功，0 警告、0 错误 |
+| 公网 HTTPS PDF | 1 页，正文与缩略图正常显示 “Dummy PDF file” |
+| 5 个公网 HTTPS 图片地址 | PNG/JPEG/WebP 均加载，默认每页一张，共 5 页 |
+| 彩色与四宫格 | 共 2 页，第一页 4 张、第二页 1 张，内容与输入顺序一致 |
+
+验证全程仅预览并取消，未提交真实打印任务。发布前本地包已完成 macOS arm64 NativeAOT 实跑；这次线上包回归使用托管宿主，没有重新运行 NativeAOT 或完整异常专项。Windows / Linux 原生运行、真实出纸及沙箱部署仍未验证。
+
+在仓库根目录复验；首次检查线上来源时，请为 NUGET_PACKAGES 选择此前未使用的目录：
+
+```sh
+NUGET_PACKAGES="$PWD/.preview/work/online-nuget-cache" dotnet restore design/PreviewHost/PreviewHost.csproj --source https://api.nuget.org/v3/index.json --no-http-cache --force -p:RestoreFallbackFolders= --artifacts-path .preview/work/online-artifacts
+NUGET_PACKAGES="$PWD/.preview/work/online-nuget-cache" dotnet build design/PreviewHost/PreviewHost.csproj -c Release --no-restore --artifacts-path .preview/work/online-artifacts
+dotnet .preview/work/online-artifacts/bin/PreviewHost/release/PreviewHost.dll
+```
+
+在“网络 PDF / 图片”中先单独输入下面的 PDF 地址，选择网络源后打开预览：
+
+```text
+https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf
+```
+
+再替换为下面 5 行图片地址，选择网络源、打开预览并切换为彩色及四宫格，检查两页内容：
+
+```text
+https://httpbin.org/image/png
+https://httpbin.org/image/jpeg
+https://httpbin.org/image/webp
+https://httpbin.org/image/png?copy=2
+https://httpbin.org/image/jpeg?copy=2
+```
+
+历史测试文件、构建缓存和日志已清理。复验时先还原、构建生成新的输出，再运行宿主。
+
 ## 打包与独立消费
 
 ```sh
@@ -25,7 +66,7 @@ NUGET_PACKAGES="$PWD/.preview/work/nuget-cache" dotnet build design/PreviewHost/
 
 本地包版本需与 PreviewHost 固定的引用版本匹配；调整测试版本时显式更新 PackageReference，不切换到源码引用。库的 PackageVersions.props 与演示消费版本分别维护。
 
-当前网络源功能使用 `1.0.0-preview.3`；本地打包验证不代表已发布到 nuget.org。发布前请使用上面的本地源和隔离缓存构建演示。
+后续源码改动仍需先使用本地源和隔离缓存验证，再按发布流程发布新版本；不能覆盖已发布的 `1.0.0-preview.3`，也不能用线上旧包的验证结果代替新源码验证。
 
 ## NativeAOT
 

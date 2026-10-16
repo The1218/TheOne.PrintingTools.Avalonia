@@ -2,6 +2,8 @@
 
 Target: .NET 10 / Avalonia 12.1.4. The main API has three inputs: **source, optional settings, and whether to preview**.
 
+As of 2026-10-16, [1.0.0-preview.3](https://www.nuget.org/packages/TheOne.PrintingTools.Avalonia/1.0.0-preview.3) is published and available for installation and restore from nuget.org.
+
 ## Start here
 
 ```csharp
@@ -200,6 +202,10 @@ Windows uses GDI and installed drivers; macOS uses bundled AppKit/PDFKit bridges
 
 Installed devices, drivers, OS printing services and access rights remain host prerequisites. App Sandbox, Flatpak and Snap require separate validation. Accepted submission does not prove physical paper output. Cancellation is best effort once submission starts; do not automatically retry uncertain results. Cancelled PDF export may leave an incomplete destination; temporary spool files are cleaned up.
 
-PreviewHost opens the simple MVVM example: choose one PDF, one or multiple images, a Visual, report or mixed sources, set optional copies and printer ID, toggle preview, then print. The ViewModel calls injected `IPrintService.PrintAsync`; the View only handles file selection and visual sources. The library prepares and releases documents. Cancellation or picker failure retains the selected source; active requests prevent reentry.
+PreviewHost opens the simple MVVM example: choose one PDF, one or multiple images, network URLs, a Visual, report or mixed sources, set optional copies and printer ID, toggle preview, then print. Enter one network URL per line and select the network source before printing. The ViewModel calls injected `IPrintService.PrintAsync`; the View handles native file selection and visual sources, while URL input binds to the ViewModel. The library prepares and releases documents. Cancellation or picker failure retains the selected source; active requests prevent reentry.
+
+On 2026-10-16, PreviewHost restored `1.0.0-preview.3` from nuget.org using a fresh cache on macOS arm64 and built in Release with zero warnings or errors. Real desktop checks confirmed a public HTTPS PDF rendered correctly in the main preview and thumbnail. Five public PNG/JPEG/WebP image URLs produced five pages by default and two pages with the 2×2 layout, with correct colors and order. Previews were cancelled; no physical print jobs were submitted.
+
+This online-package check used a managed host. The local package had previously passed macOS arm64 NativeAOT execution; NativeAOT was not repeated with the online package. Windows/Linux native execution, physical output and sandbox deployment remain unverified. A disabled Open button was previously observed in the native file picker of a temporary macOS host; successful URL previews do not establish that the local picker issue is resolved.
 
 PreviewHost retains the minimal MVVM example; historical verification entry points have been removed. Local package consumption and NativeAOT commands are in [development instructions](DEVELOPMENT.md). Debug and Release remain WinExe.
