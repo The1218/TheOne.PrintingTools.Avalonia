@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../PackageVersions.props" />
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsPackable>true</IsPackable>
+    <PackageId>TheOne.PrintingTools.Avalonia</PackageId>
+    <Version>$(TheOnePackageVersion)</Version>
+    <PackageVersion>$(TheOnePackageVersion)</PackageVersion>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Authors>The1218</Authors>
+    <Copyright>Copyright (c) 2026 The1218</Copyright>
+    <Description>Cross-platform desktop printing for .NET 10 and Avalonia 12.1.4. Print a PDF, one or multiple images, Avalonia visuals, or paginated documents through a simple API with optional preview. Includes image layouts, fill and alignment options, PDF export, and Windows GDI, macOS AppKit/PDFKit, and Linux CUPS backends.</Description>
+    <PackageProjectUrl>https://github.com/The1218/TheOne.PrintingTools.Avalonia</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/The1218/TheOne.PrintingTools.Avalonia.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageTags>Avalonia;printing;PDF;images;MVVM;Windows;macOS;Linux</PackageTags>
+    <PackageReleaseNotes>Initial standalone preview. Supports single PDF import, single/multiple image sources with configurable layout and fill, Visual snapshots, PDF export, and optional preview before printing.</PackageReleaseNotes>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Skia" Version="12.1.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.4" />
+    <PackageReference Include="bblanchon.PDFium.Win32" Version="152.0.7961" />
+    <PackageReference Include="bblanchon.PDFium.macOS" Version="152.0.7961" />
+    <PackageReference Include="bblanchon.PDFium.Linux" Version="152.0.7961" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="../../LICENSE" Pack="true" PackagePath="" />
+    <None Include="../../THIRD-PARTY-NOTICES.md" Pack="true" PackagePath="" />
+    <None Include="../../docs/PDFium-LICENSE.txt" Pack="true" PackagePath="" />
+    <None Include="../../README.md" Pack="true" PackagePath="" />
+    <None Include="runtimes/**/native/*" Pack="true" PackagePath="%(Identity)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="buildTransitive/TheOne.PrintingTools.Avalonia.targets" Pack="true" PackagePath="buildTransitive/" />
+  </ItemGroup>
+</Project>

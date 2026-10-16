@@ -1,0 +1,9 @@
+<Project>
+  <!-- RID-less framework-dependent builds also need the native bridge. Never compile on the consumer. -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == ''">
+    <None Include="$(MSBuildThisFileDirectory)../runtimes/osx-arm64/native/libTheOnePrinting.dylib"
+          Link="runtimes/osx-arm64/native/libTheOnePrinting.dylib" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="$(MSBuildThisFileDirectory)../runtimes/osx-x64/native/libTheOnePrinting.dylib"
+          Link="runtimes/osx-x64/native/libTheOnePrinting.dylib" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

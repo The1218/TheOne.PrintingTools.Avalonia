@@ -1,0 +1,9 @@
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:TheOne.PrintingTools.Avalonia" x:Class="TheOne.PrintingTools.Avalonia.PrintingToolsTheme">
+  <Styles.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries><local:PrintResources /></ResourceDictionary.MergedDictionaries>
+    </ResourceDictionary>
+  </Styles.Resources>
+  <FluentTheme />
+  <local:PrintStyles />
+</Styles>

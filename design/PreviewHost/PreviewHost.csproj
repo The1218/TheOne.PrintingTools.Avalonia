@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../../PackageVersions.props" />
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/TheOne.PrintingTools.Avalonia/TheOne.PrintingTools.Avalonia.csproj" Condition="'$(UsePackageReferences)' != 'true'" />
+    <PackageReference Include="TheOne.PrintingTools.Avalonia" Version="$(PackageVersion)" Condition="'$(UsePackageReferences)' == 'true'" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.4" />
+  </ItemGroup>
+</Project>

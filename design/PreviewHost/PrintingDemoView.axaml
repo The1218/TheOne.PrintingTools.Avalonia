@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:TheOne.DesignPreview"
+             x:Class="TheOne.DesignPreview.PrintingDemoView"
+             x:DataType="local:PrintingDemoViewModel"
+             Background="{DynamicResource PrintingTools.Surface}"
+             Foreground="{DynamicResource PrintingTools.Text}">
+  <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Margin="24" Spacing="20" MaxWidth="920" HorizontalAlignment="Stretch">
+      <TextBlock Text="打印工具 · 三个参数，一次调用" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+      <TextBlock Text="1. 选择打印源   2. 设置可选参数   3. 决定是否预览" TextWrapping="Wrap" />
+      <StackPanel Spacing="12" IsEnabled="{Binding !IsBusy}">
+        <WrapPanel>
+          <Button x:Name="DemoDocument" Content="PDF（单选）" Command="{Binding DocumentFileCommand}" Margin="0,0,8,8" />
+          <Button x:Name="DemoSingleFile" Content="单张图片" Command="{Binding SingleFileCommand}" Margin="0,0,8,8" />
+          <Button x:Name="DemoMultipleFiles" Content="多张图片" Command="{Binding MultipleFilesCommand}" Margin="0,0,8,8" />
+          <Button x:Name="DemoVisual" Content="Visual 视觉树" Command="{Binding VisualCommand}" Margin="0,0,8,8" />
+          <Button x:Name="DemoSample" Content="分页报表" Command="{Binding SampleCommand}" Margin="0,0,8,8" />
+          <Button x:Name="DemoMixed" Content="混合来源" Command="{Binding MixedCommand}" Margin="0,0,8,8" />
+        </WrapPanel>
+        <TextBlock x:Name="DemoSummary" Text="{Binding Summary}" FontSize="18" TextWrapping="Wrap" />
+        <TextBlock Text="PDF 单选；PNG / JPEG / BMP / WebP 图片可多选。预览中可选择图片布局、填充、对齐、顺序和间距。Visual 视觉树保持原样；不支持 Word / TXT。" TextWrapping="Wrap" />
+        <TextBlock Text="份数（可选，默认 1）" />
+        <NumericUpDown x:Name="DemoCopies" Value="{Binding Copies, Mode=TwoWay}" Minimum="1" Maximum="999" Increment="1"
+                       FormatString="0" AutomationProperties.Name="打印份数" MaxWidth="200" HorizontalAlignment="Left" />
+        <TextBlock Text="打印机 ID（可选，留空使用系统默认设备）" TextWrapping="Wrap" />
+        <TextBox x:Name="DemoPrinterId" Text="{Binding PrinterId, Mode=TwoWay}" PlaceholderText="系统默认打印机"
+                 AutomationProperties.Name="打印机 ID" />
+        <CheckBox x:Name="DemoShowPreview" Content="先打开预览（默认开启）" IsChecked="{Binding ShowPreview, Mode=TwoWay}" />
+        <TextBlock Text="关闭预览后，点击打印会直接提交到指定设备或系统默认设备。" TextWrapping="Wrap" />
+      </StackPanel>
+      <Border Padding="16" BorderThickness="1" CornerRadius="6" BorderBrush="{DynamicResource PrintingTools.Line}">
+        <StackPanel Spacing="12">
+          <TextBlock Text="ViewModel 的实际调用" FontWeight="SemiBold" />
+          <TextBlock x:Name="DemoCallExample" Text="{Binding CallExample}" TextWrapping="Wrap" />
+          <TextBlock Text="最简：await Printing.PrintAsync(filePath);" TextWrapping="Wrap" />
+          <TextBlock Text="多文件：await Printing.PrintAsync(filePaths);" TextWrapping="Wrap" />
+          <TextBlock Text="直接打印：await Printing.PrintAsync(filePath, showPreview: false);" TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+      <WrapPanel>
+        <Button x:Name="DemoPrint" Content="打印" Command="{Binding PrintCommand}" MinWidth="120" Margin="0,0,8,8" />
+        <Button x:Name="DemoCancel" Content="取消操作" Command="{Binding CancelCommand}" Margin="0,0,8,8" />
+      </WrapPanel>
+      <TextBlock x:Name="DemoStatus" Text="{Binding Status}" TextWrapping="Wrap" />
+      <Border x:Name="CaptureSample" Background="#E8F3F3" Padding="12" HorizontalAlignment="Left">
+        <TextBlock Text="控件快照示例 · 由打印服务捕获" Foreground="#006061" />
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
