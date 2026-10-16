@@ -4,7 +4,7 @@ using SkiaSharp;
 
 namespace TheOne.PrintingTools.Avalonia;
 
-/// <summary>A printable source. File paths, path arrays, image streams, visuals and documents convert
+/// <summary>A printable source. File paths, HTTP(S) URLs, arrays, image streams, visuals and documents convert
 /// implicitly. Sources do not own caller streams, visuals or documents.</summary>
 public abstract class PrintSource
 {
@@ -29,16 +29,35 @@ public abstract class PrintSource
     }
 
     public static PrintSource FromFiles(IEnumerable<string> paths)
+        => FromLocations(paths, FromFile);
+
+    /// <summary>Downloads one HTTP(S) PDF or image when materialized. A supplied HttpClient remains
+    /// caller-owned; its Timeout also bounds reading the response body.</summary>
+    public static PrintSource FromUrl(string url, HttpClient? httpClient = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(url);
+        if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) throw new ArgumentException("请输入完整的 HTTP/HTTPS 地址。", nameof(url));
+        return FromUrl(uri, httpClient);
+    }
+
+    public static PrintSource FromUrl(Uri url, HttpClient? httpClient = null)
+        => new RemotePrintSource(url, httpClient);
+
+    /// <summary>Combines up to 100 remote images in order; a PDF requires exactly one source.</summary>
+    public static PrintSource FromUrls(IEnumerable<string> urls, HttpClient? httpClient = null)
+        => FromLocations(urls, url => FromUrl(url, httpClient));
+
+    private static PrintSource FromLocations(IEnumerable<string> paths, Func<string, PrintSource> create)
     {
         ArgumentNullException.ThrowIfNull(paths);
         var sources = new List<PrintSource>();
         foreach (var path in paths)
         {
             if (sources.Count == 100) throw new ArgumentException("一次最多导入 100 个文件。", nameof(paths));
-            sources.Add(FromFile(path));
+            sources.Add(create(path));
         }
         if (sources.Count > 1 && sources.Any(source => source.RequiresSingleSelection))
-            throw new ArgumentException("PDF 只能单选，多个文件仅支持图片。", nameof(paths));
+            throw new ArgumentException("PDF 只能单选，多个文件或地址仅支持图片。", nameof(paths));
         return Combine(sources);
     }
 
@@ -78,7 +97,7 @@ public abstract class PrintSource
         {
             token.ThrowIfCancellationRequested();
             return Task.FromResult(PrintDocument.Combine(document.Title, [document]));
-        });
+        }, document.IsPdfDocument);
     }
 
     /// <summary>Draws explicit pages when the source is materialized. Drawing is synchronous and uses PDF points.</summary>
@@ -121,6 +140,8 @@ public abstract class PrintSource
                 {
                     token.ThrowIfCancellationRequested();
                     documents.Add(await item.CreateDocumentAsync(token));
+                    if (items.Count > 1 && documents[^1].IsPdfDocument)
+                        throw new ArgumentException("PDF 只能作为单个打印源，不能与其他来源混选。", nameof(sources));
                     totalPages += documents[^1].PageCount;
                     imageBytes += documents[^1].Images?.ByteCount ?? 0;
                     if (imageBytes > 256L * 1024 * 1024) throw new ArgumentException("图片总大小不能超过 256 MB。", nameof(sources));
@@ -134,8 +155,18 @@ public abstract class PrintSource
         }, items.Any(source => source.RequiresSingleSelection));
     }
 
-    public static implicit operator PrintSource(string path) => FromFile(path);
-    public static implicit operator PrintSource(string[] paths) => FromFiles(paths);
+    private static PrintSource FromLocation(string location)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(location);
+        if (Uri.TryCreate(location, UriKind.Absolute, out var uri) && uri.Scheme is "http" or "https") return FromUrl(uri);
+        if (location.Contains("://", StringComparison.Ordinal)) throw new NotSupportedException("网络打印源仅支持 HTTP/HTTPS 地址。");
+        return FromFile(location);
+    }
+
+    public static implicit operator PrintSource(string pathOrUrl) => FromLocation(pathOrUrl);
+    public static implicit operator PrintSource(string[] pathsOrUrls) => FromLocations(pathsOrUrls, FromLocation);
+    public static implicit operator PrintSource(Uri url) => FromUrl(url);
+    public static implicit operator PrintSource(Uri[] urls) => FromUrls(urls.Select(url => (url ?? throw new ArgumentNullException(nameof(urls))).AbsoluteUri));
     public static implicit operator PrintSource(Stream image) => FromImage(image);
     public static implicit operator PrintSource(Visual visual) => FromControl(visual);
     public static implicit operator PrintSource(PrintDocument document) => FromDocument(document);

@@ -70,8 +70,9 @@ public sealed class ReportViewModel(IPrintService printing)
 
 | 参数 | 行为 |
 | --- | --- |
-| `string` 本地文件路径 | 读取单个 PDF 或图片 |
-| `string[]` 多文件路径 | 图片按数组顺序合并；包含 PDF 时必须只有一个路径 |
+| `string` 本地路径或 HTTP/HTTPS URL | 读取或下载单个 PDF 或图片 |
+| `Uri` / `Uri[]` | 单个网络文件或多张网络图片 |
+| `string[]` 路径或 URL | 图片按数组顺序合并，支持本地／网络图片混合；包含 PDF 时必须只有一个来源 |
 | `Stream` 图片流 | 从当前位置读取一张图片 |
 | Avalonia `Visual` / `Control` | 在 UI 线程捕获已布局控件 |
 | `PrintDocument` | 使用已有分页文档，仍由调用方持有 |
@@ -120,6 +121,36 @@ await Printing.PrintAsync(source);
 ```
 
 先加载业务数据，再在同步绘制回调中分页。高级自定义源可以继承 `PrintSource`，实现 `Title` 和 `CreateDocumentAsync`；每次返回新的文档，服务将在本次操作结束后释放它。调用方自己调用 `CreateDocumentAsync` 时，则负责释放返回的文档。
+
+## 网络 PDF 与图片
+
+三参数 API 不变，URL 可以直接作为第一个参数：
+
+```csharp
+await Printing.PrintAsync("https://example.com/report.pdf");
+await Printing.PrintAsync(new[]
+{
+    "https://example.com/a.jpg?size=large",
+    "https://example.com/b.png"
+}, new PrintSettings { ImageOptions = new() { Layout = PrintImageLayout.TwoColumns } });
+await Printing.PrintAsync(new Uri("https://example.com/download?id=123"), showPreview: false);
+```
+
+也可显式使用 `PrintSource.FromUrl(url)` 或 `FromUrls(urls)`。需要请求头、鉴权、代理或自定义超时时，可以提供应用管理的 HttpClient：
+
+```csharp
+var source = PrintSource.FromUrl(url, httpClient);
+await printing.PrintAsync(source, options, showPreview: true, cancellationToken: ct);
+```
+
+- 仅接受完整 HTTP/HTTPS 地址；不需要注册网络服务。默认客户端复用连接、不保存 Cookie，最多自动重定向 5 次。传入的 HttpClient 不会被库释放。
+- 下载发生在 `PrintAsync` 准备文档时，预览出现前完成。支持取消；下载总时限沿用 HttpClient.Timeout（默认 100 秒），覆盖响应头和正文读取，InfiniteTimeSpan 表示由调用方取消控制。
+- 根据文件签名识别 PDF／图片，支持查询参数、重定向和没有扩展名的 URL。响应 Content-Type 必须为支持的 PDF／图片类型、通用二进制类型或未提供；网页、未知格式及声明与内容不符的响应会报错。
+- PDF 仍只能作为单个来源；无扩展名地址在下载识别后也会检查，不能通过组合源绕过。图片地址数组最多 100 个，顺序与输入一致；纯图片任务沿用所有布局和填充配置。
+- 网络与本地输入沿用 64 MB/PDF、32 MB/图片和 256 MB 图片总量限制。服务先完整读取内容，不做边下载边预览，也不自动重试失败请求。
+- 字符串隐式转换会识别 URL；`FromFile / FromFiles` 工厂仍专用于本地路径。网络响应流由库释放；调用方显式提供的流仍遵循原来的所有权规则。
+
+PreviewHost 的“网络 PDF / 图片”支持每行输入一个 URL，点击“使用网络源”选择来源，再由统一“打印”按钮按预览开关执行；下载中可取消。
 
 ## 图片内容与排版
 

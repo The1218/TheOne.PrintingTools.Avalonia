@@ -16,18 +16,26 @@ internal static class PrintFileLoader
     {
         Validate(name); token.ThrowIfCancellationRequested();
         var input = await ReadLimitedAsync(stream, IsDocument(name) ? 64 * 1024 * 1024 : 32 * 1024 * 1024, token).ConfigureAwait(false);
+        return await LoadBytesAsync(name, input, token, title).ConfigureAwait(false);
+    }
+
+    internal static Task<PrintDocument> LoadBytesAsync(string name, byte[] input, CancellationToken token, string? title = null)
+    {
+        Validate(name); token.ThrowIfCancellationRequested();
         if (IsDocument(name))
-            return await Task.Run(() => PdfPrintDocument.Create(title ?? name, input, token), token).ConfigureAwait(false);
-        return await Task.Run(() =>
+            return Task.Run(() => PdfPrintDocument.Create(title ?? name, input, token), token);
+        return Task.Run(() =>
         {
             token.ThrowIfCancellationRequested();
             return ImagePrintDocument.Create(title ?? name, input);
-        }, token).ConfigureAwait(false);
+        }, token);
     }
 
-    internal static async Task<byte[]> ReadLimitedAsync(Stream stream, int limit, CancellationToken token)
+    internal static async Task<byte[]> ReadLimitedAsync(Stream stream, int limit, CancellationToken token, ReadOnlyMemory<byte> prefix = default)
     {
         using var input = new MemoryStream();
+        if (prefix.Length > limit) throw new ArgumentException($"文件超过 {limit / 1024 / 1024} MB 导入上限。");
+        input.Write(prefix.Span);
         var buffer = new byte[81920];
         int count;
         while ((count = await stream.ReadAsync(buffer, token).ConfigureAwait(false)) != 0)

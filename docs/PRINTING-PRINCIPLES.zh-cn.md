@@ -36,11 +36,14 @@ await Printing.PrintAsync(source, options: null, showPreview: true);
 | --- | --- |
 | 单个 PDF | PDFium 读取页数与尺寸，保留输入字节，在请求绘制某页时才渲染该页 |
 | 单张／多张图片 | 保留图片编码数据，按选定布局计算页面与单元格，再解码、校正 EXIF 方向并绘制 |
+| HTTP(S) PDF／图片 URL | 异步下载并检查响应类型、文件签名和大小，再复用 PDF／图片导入；按输入顺序组合网络图片 |
 | Visual 视觉树 | UI 线程用 Avalonia `RenderTargetBitmap` 捕获已布局区域，形成固定页面快照 |
 | 显式分页绘制 | 调用绘制回调，以 Skia `SKPicture` 记录每页内容 |
 | 已有文档／混合业务来源 | 按来源与页码顺序创建统一纸张的文档快照；纯图片组合保留图片排版能力 |
 
 PDF 只能单选，不能与其他来源混选；图片可以多选。Visual 捕获已布局的可见内容，长列表的虚拟化数据或离屏内容需要业务显式分页。
+
+URL 下载发生在创建文档时，预览和直接打印共用这一步；不会把 URL 直接交给系统驱动。默认复用 HttpClient，支持重定向及压缩响应，超时覆盖响应头和响应体；调用方可传入自己的 HttpClient 配置认证和超时。PDF 上限 64 MB、单张图片 32 MB，图片集合总计 256 MB、最多 100 项。即使 URL 没有扩展名，识别出的 PDF 也必须独占来源。失败或取消时释放响应和中间文档，不提交部分任务。
 
 PDFium 负责 **PDF 输入解析**，SkiaSharp 负责 **页面绘制与 PDF 输出**。当前 PDF 输入按需栅格化为 300 DPI，大页面限制为 1600 万像素及单边 8192 像素。混合尺寸 PDF 页面适配到首张纸张；导入后重新导出的 PDF 不保留原始矢量、可搜索文本或交互表单。
 
@@ -105,7 +108,7 @@ CUPS 服务及其过滤器、驱动继续处理设备协议。运行环境需要
 | 层次 | 责任 | 主要实现 |
 | --- | --- | --- |
 | 应用 API | 来源、配置、预览开关、所属窗口与生命周期 | `PrintService.cs` |
-| 输入文档 | PDF、图片、Visual、业务分页统一为文档 | `PrintSource.cs`、`PrintDocument.cs`、`PdfPrintDocument.cs`、`ImagePrintDocument.cs` |
+| 输入文档 | 本地／网络 PDF 和图片、Visual、业务分页统一为文档 | `PrintSource.cs`、`RemotePrintSource.cs`、`PrintDocument.cs`、`PdfPrintDocument.cs`、`ImagePrintDocument.cs` |
 | 排版与绘制 | 物理坐标、图片布局、边距、页序列、Skia 绘制 | `PrintLayout.cs`、`PrintRendering.cs` |
 | 公共界面 | 设备与参数选择、缩略图、页面预览 | `PrintPreview*.cs` |
 | 平台后端 | 系统设备能力、原生参数和任务提交 | `Platforms/*PrintBackend.cs` |

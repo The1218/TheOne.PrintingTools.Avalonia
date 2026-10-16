@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0-preview.2</PackageVersion>
+    <PackageVersion Condition="'$(PackageVersion)' == ''">1.0.0-preview.3</PackageVersion>
     <TheOnePackageVersion>$(PackageVersion)</TheOnePackageVersion>
   </PropertyGroup>
 </Project>

@@ -68,8 +68,9 @@ All these convert implicitly to `PrintSource` and use the same method:
 
 | Input | Behavior |
 | --- | --- |
-| `string` local path | Load one PDF or image |
-| `string[]` paths | Combine images in array order; PDF requires exactly one path |
+| `string` local path or HTTP/HTTPS URL | Load or download one PDF or image |
+| `Uri` / `Uri[]` | One remote file or multiple remote images |
+| `string[]` paths or URLs | Combine local/remote images in array order; PDF requires exactly one source |
 | `Stream` image | Read one image at the current position |
 | Avalonia `Visual` / `Control` | Capture an arranged visual on the UI thread |
 | `PrintDocument` | Use an existing paginated document; caller retains ownership |
@@ -118,6 +119,36 @@ await Printing.PrintAsync(source);
 ```
 
 Load data before the synchronous draw callback. Custom sources can derive from `PrintSource`, implementing `Title` and `CreateDocumentAsync`. Return a fresh document each time; the service owns and disposes that result. Callers invoking `CreateDocumentAsync` themselves own its result.
+
+## Remote PDF and images
+
+The three-argument API accepts URLs directly:
+
+```csharp
+await Printing.PrintAsync("https://example.com/report.pdf");
+await Printing.PrintAsync(new[]
+{
+    "https://example.com/a.jpg?size=large",
+    "https://example.com/b.png"
+}, new PrintSettings { ImageOptions = new() { Layout = PrintImageLayout.TwoColumns } });
+await Printing.PrintAsync(new Uri("https://example.com/download?id=123"), showPreview: false);
+```
+
+Use `PrintSource.FromUrl(url)` or `FromUrls(urls)` for explicit sources. An optional caller-owned HttpClient supplies headers, authentication, proxy settings and timeout:
+
+```csharp
+var source = PrintSource.FromUrl(url, httpClient);
+await printing.PrintAsync(source, options, showPreview: true, cancellationToken: ct);
+```
+
+- Only absolute HTTP/HTTPS URLs are accepted. No network service registration is required. The shared client reuses connections, stores no cookies and follows at most five redirects. Supplied clients remain caller-owned.
+- Download occurs during document preparation, before preview opens. Cancellation is supported. HttpClient.Timeout bounds the entire download including response-body reads (100 seconds by default); InfiniteTimeSpan leaves cancellation to the caller.
+- File signatures identify PDF and supported images, including URLs without extensions or with query strings and redirects. Content-Type must be a supported PDF/image type, generic binary type, or absent. HTML, unknown formats and mismatched declarations fail explicitly.
+- PDF must be the only source, including PDFs detected after download or inside nested combinations. Arrays accept up to 100 image URLs in input order; pure image jobs retain existing layout and fill settings.
+- Existing limits apply: 64 MB per PDF, 32 MB per image and 256 MB combined image data. Content is fully buffered before parsing; there is no download preview or automatic retry.
+- String conversions recognize URLs; explicit `FromFile / FromFiles` factories remain local-path APIs. The library disposes HTTP responses and response streams; ownership of explicitly supplied input streams is unchanged.
+
+PreviewHost accepts one URL per line in its network source entry. Select the source, then use the common Print button and preview switch. Active downloads can be cancelled.
 
 ## Image content and layout
 

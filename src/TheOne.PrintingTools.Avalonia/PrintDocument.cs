@@ -16,6 +16,7 @@ public sealed class PrintDocument : IDisposable
     private readonly int _pageCount;
     internal ImagePrintDocument? Images { get; }
     public bool IsImageDocument => Images is not null;
+    internal bool IsPdfDocument { get; private set; }
     private bool _disposed;
     private readonly object _sync = new();
     public string Title { get; }
@@ -38,7 +39,10 @@ public sealed class PrintDocument : IDisposable
     // PDF sources retain their immutable bytes and render only requested pages, avoiding an eager
     // bitmap for every page. This lifetime remains private to the owned PrintDocument.
     internal PrintDocument(string title, PrintPaper paper, int pageCount, Action<SKCanvas, int> renderPage, IDisposable source)
-        => (Title, Paper, _pages, _pageCount, _renderPage, _source) = (title, paper, [], pageCount, renderPage, source);
+    {
+        (Title, Paper, _pages, _pageCount, _renderPage, _source) = (title, paper, [], pageCount, renderPage, source);
+        IsPdfDocument = source is PdfPrintDocument;
+    }
 
     internal PrintDocument(string title, PrintPaper paper, ImagePrintDocument images)
         => (Title, Paper, _pages, _pageCount, Images) = (title, paper, [], images.Images.Length, images);
@@ -90,11 +94,14 @@ public sealed class PrintDocument : IDisposable
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         ArgumentNullException.ThrowIfNull(sources);
         var pages = new List<(PrintDocument Source, int Page)>();
-        var images = new List<byte[]>(); var allImages = true;
+        var images = new List<byte[]>(); var allImages = true; var containsPdf = false;
         foreach (var source in sources)
         {
             ArgumentNullException.ThrowIfNull(source);
             lock (source._sync) ObjectDisposedException.ThrowIf(source._disposed, source);
+            if ((containsPdf && pages.Count > 0) || (source.IsPdfDocument && pages.Count > 0))
+                throw new ArgumentException("PDF 只能作为单个打印源，不能与其他来源混选。", nameof(sources));
+            containsPdf |= source.IsPdfDocument;
             paper ??= source.Paper;
             if (source.Images is not null) images.AddRange(source.Images.Images);
             else allImages = false;
@@ -106,7 +113,7 @@ public sealed class PrintDocument : IDisposable
         var target = paper!;
         PrintLayout.ValidatePaper(target);
         if (allImages) return new PrintDocument(title, target, new ImagePrintDocument(images.ToArray()));
-        return Create(title, pages.Count, (canvas, index) =>
+        var combined = Create(title, pages.Count, (canvas, index) =>
         {
             var (source, page) = pages[index];
             var width = target.WidthMm * 72 / 25.4;
@@ -123,6 +130,8 @@ public sealed class PrintDocument : IDisposable
             }
             finally { canvas.Restore(); }
         }, target);
+        combined.IsPdfDocument = containsPdf;
+        return combined;
     }
 
     /// <summary>Captures the arranged visual only; virtualized / offscreen records require explicit pagination.</summary>

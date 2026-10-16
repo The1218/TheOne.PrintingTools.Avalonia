@@ -21,7 +21,7 @@ public sealed class PrintingDemoViewModel : INotifyPropertyChanged, IDisposable
     private readonly DemoCommand[] _commands;
     private CancellationTokenSource? _operation;
     private PrintSource _source = SampleReport.CreateSource();
-    private string _status = "选择打印源后点击打印，默认先打开预览。", _printerId = "";
+    private string _status = "选择打印源后点击打印，默认先打开预览。", _printerId = "", _networkUrls = "";
     private bool _isBusy, _disposed, _showPreview = true;
     private decimal _copies = 1;
 
@@ -35,9 +35,10 @@ public sealed class PrintingDemoViewModel : INotifyPropertyChanged, IDisposable
         VisualCommand = new DemoCommand(() => SelectAsync(_platform.CreateVisualSource()), CanRun);
         SampleCommand = new DemoCommand(() => SelectAsync(SampleReport.CreateSource()), CanRun);
         MixedCommand = new DemoCommand(() => SelectAsync(_platform.CreateMixedSource()), CanRun);
+        NetworkSourceCommand = new DemoCommand(SelectNetworkAsync, CanRun);
         PrintCommand = new DemoCommand(PrintAsync, CanRun);
         CancelCommand = new DemoCommand(() => { Cancel(); return Task.CompletedTask; }, () => IsBusy);
-        _commands = [SingleFileCommand, MultipleFilesCommand, DocumentFileCommand, VisualCommand, SampleCommand, MixedCommand, PrintCommand];
+        _commands = [SingleFileCommand, MultipleFilesCommand, DocumentFileCommand, VisualCommand, SampleCommand, MixedCommand, NetworkSourceCommand, PrintCommand];
         foreach (var command in _commands) command.Run = RunAsync;
     }
 
@@ -49,6 +50,7 @@ public sealed class PrintingDemoViewModel : INotifyPropertyChanged, IDisposable
     public bool ShowPreview { get => _showPreview; set { _showPreview = value; Changed(); Changed(nameof(CallExample)); } }
     public decimal Copies { get => _copies; set { _copies = value; Changed(); } }
     public string PrinterId { get => _printerId; set { _printerId = value; Changed(); } }
+    public string NetworkUrls { get => _networkUrls; set { _networkUrls = value; Changed(); } }
     public string CallExample => $"await _printing.PrintAsync(source, options, showPreview: {ShowPreview.ToString().ToLowerInvariant()});";
     public DemoCommand SingleFileCommand { get; }
     public DemoCommand MultipleFilesCommand { get; }
@@ -56,6 +58,7 @@ public sealed class PrintingDemoViewModel : INotifyPropertyChanged, IDisposable
     public DemoCommand VisualCommand { get; }
     public DemoCommand SampleCommand { get; }
     public DemoCommand MixedCommand { get; }
+    public DemoCommand NetworkSourceCommand { get; }
     public DemoCommand PrintCommand { get; }
     public DemoCommand CancelCommand { get; }
 
@@ -71,14 +74,21 @@ public sealed class PrintingDemoViewModel : INotifyPropertyChanged, IDisposable
     {
         _source = source;
         Changed(nameof(Source)); Changed(nameof(Summary));
-        Status = "打印源已选择。点击打印后，由服务读取文件并处理预览或直接打印。";
+        Status = "打印源已选择。点击打印后，由服务加载内容并处理预览或直接打印。";
         return Task.CompletedTask;
+    }
+
+    private Task SelectNetworkAsync()
+    {
+        var urls = NetworkUrls.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        return SelectAsync(PrintSource.FromUrls(urls));
     }
 
     private async Task PrintAsync()
     {
         if (Copies != decimal.Truncate(Copies)) throw new ArgumentException("份数必须为整数。");
         var options = new PrintSettings { Copies = checked((int)Copies), PrinterId = string.IsNullOrWhiteSpace(PrinterId) ? null : PrinterId.Trim() };
+        Status = "正在准备打印源；网络内容下载期间可取消操作。";
         var result = await _printing.PrintAsync(Source, options, showPreview: ShowPreview, cancellationToken: _operation!.Token);
         Status = result.Message;
     }

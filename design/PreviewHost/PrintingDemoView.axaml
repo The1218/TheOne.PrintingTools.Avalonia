@@ -18,6 +18,15 @@
           <Button x:Name="DemoSample" Content="分页报表" Command="{Binding SampleCommand}" Margin="0,0,8,8" />
           <Button x:Name="DemoMixed" Content="混合来源" Command="{Binding MixedCommand}" Margin="0,0,8,8" />
         </WrapPanel>
+        <TextBlock Text="网络 PDF / 图片" FontWeight="SemiBold" />
+        <TextBox x:Name="DemoNetworkUrls" Text="{Binding NetworkUrls, Mode=TwoWay}" AcceptsReturn="True"
+                 MinHeight="90" MaxHeight="180" TextWrapping="Wrap"
+                 PlaceholderText="每行一个完整的 http:// 或 https:// 地址"
+                 AutomationProperties.Name="网络打印源地址，每行一个" />
+        <TextBlock Text="PDF 仅一个地址；图片可多个。选择源后点击打印才开始下载，下载期间可取消。"
+                   TextWrapping="Wrap" />
+        <Button x:Name="DemoNetworkSource" Content="使用网络源" Command="{Binding NetworkSourceCommand}"
+                HorizontalAlignment="Left" AutomationProperties.Name="使用网络 PDF 或图片源" />
         <TextBlock x:Name="DemoSummary" Text="{Binding Summary}" FontSize="18" TextWrapping="Wrap" />
         <TextBlock Text="PDF 单选；PNG / JPEG / BMP / WebP 图片可多选。预览中可选择图片布局、填充、对齐、顺序和间距。Visual 视觉树保持原样；不支持 Word / TXT。" TextWrapping="Wrap" />
         <TextBlock Text="份数（可选，默认 1）" />
