@@ -2,30 +2,35 @@
 
 项目目标为 .NET 10 / Avalonia 12.1.4。公开仓库保留控件源码、最简 MVVM 示例和文档；历史一次性专项测试、截图和缓存已移除。
 
-## 源码构建
+## 库源码与 NuGet 演示
 
 ```sh
+dotnet build src/TheOne.PrintingTools.Avalonia/TheOne.PrintingTools.Avalonia.csproj --artifacts-path .preview/work/library-artifacts
 dotnet build design/PreviewHost/PreviewHost.csproj --artifacts-path .preview/work/artifacts
 dotnet run --project design/PreviewHost/PreviewHost.csproj
 ```
 
 PreviewHost 的 Debug / Release 均为 WinExe。入口为 `Program.cs`，示例为 `PrintingDemoView.axaml` / `PrintingDemoViewModel.cs`。View 提供原生文件选择和 Visual 来源，ViewModel 通过注入的 IPrintService 调用打印。默认启用预览；关闭预览会提交到真实打印队列。
 
+PreviewHost 仅保留固定版本 PackageReference，不提供源码 ProjectReference 或引用模式开关，也不导入库包版本配置。普通还原、构建和运行均消费 NuGet 包；库源码改动不会自动进入演示。
+
 ## 打包与独立消费
 
 ```sh
 dotnet pack src/TheOne.PrintingTools.Avalonia/TheOne.PrintingTools.Avalonia.csproj -c Release --artifacts-path .preview/work/pack-artifacts -o .preview/work/packages
-NUGET_PACKAGES="$PWD/.preview/work/nuget-cache" dotnet build design/PreviewHost/PreviewHost.csproj -c Release -p:UsePackageReferences=true --source "$PWD/.preview/work/packages" --source https://api.nuget.org/v3/index.json --artifacts-path .preview/work/consumer-artifacts
+NUGET_PACKAGES="$PWD/.preview/work/nuget-cache" dotnet build design/PreviewHost/PreviewHost.csproj -c Release --source "$PWD/.preview/work/packages" --source https://api.nuget.org/v3/index.json --artifacts-path .preview/work/consumer-artifacts
 ```
 
 使用全新 NUGET_PACKAGES 目录避免同版本旧缓存。检查 project.assets.json 中本包类型为 package，确认消费 DLL 与 nupkg 内 DLL 一致，并检查 nuspec 仓库地址、版本、README、许可证、主题和 RID 原生资源。
+
+本地包版本需与 PreviewHost 固定的引用版本匹配；调整测试版本时显式更新 PackageReference，不切换到源码引用。库的 PackageVersions.props 与演示消费版本分别维护。
 
 ## NativeAOT
 
 在对应平台安装原生编译工具，再发布包消费模式的 PreviewHost。例如 macOS arm64：
 
 ```sh
-NUGET_PACKAGES="$PWD/.preview/work/nuget-cache" dotnet publish design/PreviewHost/PreviewHost.csproj -c Release -r osx-arm64 -p:UsePackageReferences=true -p:PublishAot=true --source "$PWD/.preview/work/packages" --source https://api.nuget.org/v3/index.json --artifacts-path .preview/work/aot-artifacts -o .preview/work/aot
+NUGET_PACKAGES="$PWD/.preview/work/nuget-cache" dotnet publish design/PreviewHost/PreviewHost.csproj -c Release -r osx-arm64 -p:PublishAot=true --source "$PWD/.preview/work/packages" --source https://api.nuget.org/v3/index.json --artifacts-path .preview/work/aot-artifacts -o .preview/work/aot
 ```
 
 macOS 的 clang 与 SDK 应来自同一 Xcode。发布后实际运行对应平台产物，核对 PDFium 和 macOS 桥接库加载。跨 RID 构建不能代替平台实跑。

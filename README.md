@@ -101,6 +101,8 @@ dotnet build design/PreviewHost/PreviewHost.csproj --artifacts-path .preview/wor
 
 `design/PreviewHost` 保留最简 View / ViewModel 演示：选择 PDF、单张／多张图片、Visual、报表或混合来源，设置可选参数并选择是否预览。历史一次性验证脚本与截图缓存不纳入仓库。
 
+PreviewHost 仅通过固定版本 NuGet 包测试控件，不提供源码引用或条件切换；修改库源码后需先打包并更新实际消费的包，演示结果才会反映本次改动。
+
 - [跨平台打印原理](https://github.com/The1218/TheOne.PrintingTools.Avalonia/blob/main/docs/PRINTING-PRINCIPLES.zh-cn.md)
 - [开发与本地包消费](https://github.com/The1218/TheOne.PrintingTools.Avalonia/blob/main/docs/DEVELOPMENT.md)
 - [打包与发布](https://github.com/The1218/TheOne.PrintingTools.Avalonia/blob/main/docs/PUBLISHING.md)
