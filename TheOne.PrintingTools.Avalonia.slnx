@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="src/TheOne.PrintingTools.Avalonia/TheOne.PrintingTools.Avalonia.csproj" />
-  <Project Path="design/PreviewHost/PreviewHost.csproj" />
+    <Project Path="src/TheOne.PrintingTools.Avalonia/TheOne.PrintingTools.Avalonia.csproj"/>
+    <Project Path="design/PreviewHost/PreviewHost.csproj"/>
 </Solution>

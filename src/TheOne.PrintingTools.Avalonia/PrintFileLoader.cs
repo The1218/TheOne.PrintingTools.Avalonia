@@ -2,8 +2,16 @@ namespace TheOne.PrintingTools.Avalonia;
 
 internal static class PrintFileLoader
 {
-    internal static bool IsImage(string name) => Path.GetExtension(name).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp";
-    internal static bool IsDocument(string name) => Path.GetExtension(name).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+    internal static bool IsImage(string name)
+    {
+        return Path.GetExtension(name).ToLowerInvariant() is ".png" or ".jpg" or ".jpeg" or ".bmp" or ".webp";
+    }
+
+    internal static bool IsDocument(string name)
+    {
+        return Path.GetExtension(name).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+    }
+
     internal static void Validate(string name)
     {
         if (!IsImage(name) && !IsDocument(name))
@@ -14,14 +22,18 @@ internal static class PrintFileLoader
     internal static async Task<PrintDocument> LoadAsync(string name, Stream stream, CancellationToken token,
         string? title = null)
     {
-        Validate(name); token.ThrowIfCancellationRequested();
-        var input = await ReadLimitedAsync(stream, IsDocument(name) ? 64 * 1024 * 1024 : 32 * 1024 * 1024, token).ConfigureAwait(false);
+        Validate(name);
+        token.ThrowIfCancellationRequested();
+        var input = await ReadLimitedAsync(stream, IsDocument(name) ? 64 * 1024 * 1024 : 32 * 1024 * 1024, token)
+            .ConfigureAwait(false);
         return await LoadBytesAsync(name, input, token, title).ConfigureAwait(false);
     }
 
-    internal static Task<PrintDocument> LoadBytesAsync(string name, byte[] input, CancellationToken token, string? title = null)
+    internal static Task<PrintDocument> LoadBytesAsync(string name, byte[] input, CancellationToken token,
+        string? title = null)
     {
-        Validate(name); token.ThrowIfCancellationRequested();
+        Validate(name);
+        token.ThrowIfCancellationRequested();
         if (IsDocument(name))
             return Task.Run(() => PdfPrintDocument.Create(title ?? name, input, token), token);
         return Task.Run(() =>
@@ -31,7 +43,8 @@ internal static class PrintFileLoader
         }, token);
     }
 
-    internal static async Task<byte[]> ReadLimitedAsync(Stream stream, int limit, CancellationToken token, ReadOnlyMemory<byte> prefix = default)
+    internal static async Task<byte[]> ReadLimitedAsync(Stream stream, int limit, CancellationToken token,
+        ReadOnlyMemory<byte> prefix = default)
     {
         using var input = new MemoryStream();
         if (prefix.Length > limit) throw new ArgumentException($"文件超过 {limit / 1024 / 1024} MB 导入上限。");
@@ -43,6 +56,7 @@ internal static class PrintFileLoader
             if (input.Length + count > limit) throw new ArgumentException($"文件超过 {limit / 1024 / 1024} MB 导入上限。");
             input.Write(buffer, 0, count);
         }
+
         token.ThrowIfCancellationRequested();
         return input.ToArray();
     }

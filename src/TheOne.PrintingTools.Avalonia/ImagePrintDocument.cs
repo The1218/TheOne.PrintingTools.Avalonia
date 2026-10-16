@@ -4,14 +4,15 @@ namespace TheOne.PrintingTools.Avalonia;
 
 internal sealed class ImagePrintDocument
 {
-    internal byte[][] Images { get; }
-    internal long ByteCount { get; }
     internal ImagePrintDocument(byte[][] images)
     {
         Images = images;
         ByteCount = images.Sum(image => (long)image.Length);
         if (ByteCount > 256L * 1024 * 1024) throw new ArgumentException("图片总大小不能超过 256 MB。");
     }
+
+    internal byte[][] Images { get; }
+    internal long ByteCount { get; }
 
     internal static PrintDocument Create(string title, byte[] bytes)
     {
@@ -22,12 +23,15 @@ internal sealed class ImagePrintDocument
         return new PrintDocument(title, PrintPaper.A4, new ImagePrintDocument([bytes]));
     }
 
-    internal static (int Rows, int Columns) Grid(PrintImageLayout layout) => layout switch
+    internal static (int Rows, int Columns) Grid(PrintImageLayout layout)
     {
-        PrintImageLayout.OnePerPage => (1, 1), PrintImageLayout.TwoRows => (2, 1),
-        PrintImageLayout.TwoColumns => (1, 2), PrintImageLayout.Grid2x2 => (2, 2),
-        PrintImageLayout.Grid3x3 => (3, 3), _ => throw new ArgumentException("图片布局无效。")
-    };
+        return layout switch
+        {
+            PrintImageLayout.OnePerPage => (1, 1), PrintImageLayout.TwoRows => (2, 1),
+            PrintImageLayout.TwoColumns => (1, 2), PrintImageLayout.Grid2x2 => (2, 2),
+            PrintImageLayout.Grid3x3 => (3, 3), _ => throw new ArgumentException("图片布局无效。")
+        };
+    }
 
     internal static void Validate(PrintImageOptions options)
     {
@@ -53,7 +57,8 @@ internal sealed class ImagePrintDocument
             if (index >= Images.Length) break;
             var row = options.Order == PrintImageOrder.AcrossThenDown ? slot / columns : slot % rows;
             var column = options.Order == PrintImageOrder.AcrossThenDown ? slot % columns : slot / rows;
-            var left = area.Left + column * (cellWidth + gap); var top = area.Top + row * (cellHeight + gap);
+            var left = area.Left + column * (cellWidth + gap);
+            var top = area.Top + row * (cellHeight + gap);
             DrawImage(canvas, Images[index], new SKRect(left, top, left + cellWidth, top + cellHeight), options);
         }
     }
@@ -62,8 +67,10 @@ internal sealed class ImagePrintDocument
     {
         using var image = Decode(bytes);
         var rotate = options.AutoRotate && options.Fill != PrintImageFill.Stretch &&
-            Math.Min(cell.Width / image.Height, cell.Height / image.Width) > Math.Min(cell.Width / image.Width, cell.Height / image.Height);
-        var width = rotate ? image.Height : image.Width; var height = rotate ? image.Width : image.Height;
+                     Math.Min(cell.Width / image.Height, cell.Height / image.Width) >
+                     Math.Min(cell.Width / image.Width, cell.Height / image.Height);
+        var width = rotate ? image.Height : image.Width;
+        var height = rotate ? image.Width : image.Height;
         var scale = options.Fill == PrintImageFill.Fill ? Math.Max(cell.Width / width, cell.Height / height)
             : options.Fill == PrintImageFill.ActualSize ? .75f : Math.Min(cell.Width / width, cell.Height / height);
         var drawWidth = options.Fill == PrintImageFill.Stretch ? cell.Width : width * scale;
@@ -75,12 +82,21 @@ internal sealed class ImagePrintDocument
         try
         {
             canvas.ClipRect(cell);
-            canvas.Translate(x, y); canvas.Scale(drawWidth / width, drawHeight / height);
-            if (rotate) { canvas.Translate(image.Height, 0); canvas.RotateDegrees(90); }
+            canvas.Translate(x, y);
+            canvas.Scale(drawWidth / width, drawHeight / height);
+            if (rotate)
+            {
+                canvas.Translate(image.Height, 0);
+                canvas.RotateDegrees(90);
+            }
+
             using var paint = new SKPaint { IsAntialias = true };
             canvas.DrawBitmap(image, 0, 0, paint);
         }
-        finally { canvas.Restore(); }
+        finally
+        {
+            canvas.Restore();
+        }
     }
 
     private static SKBitmap Decode(byte[] bytes)
@@ -92,7 +108,8 @@ internal sealed class ImagePrintDocument
         if (origin == 1) return image;
         try
         {
-            var width = image.Width; var height = image.Height;
+            var width = image.Width;
+            var height = image.Height;
             var result = new SKBitmap(origin >= 5 ? height : width, origin >= 5 ? width : height);
             try
             {
@@ -108,11 +125,19 @@ internal sealed class ImagePrintDocument
                     8 => new SKMatrix(0, 1, 0, -1, 0, width, 0, 0, 1),
                     _ => SKMatrix.Identity
                 };
-                canvas.SetMatrix(matrix); canvas.DrawBitmap(image, 0, 0);
+                canvas.SetMatrix(matrix);
+                canvas.DrawBitmap(image, 0, 0);
                 return result;
             }
-            catch { result.Dispose(); throw; }
+            catch
+            {
+                result.Dispose();
+                throw;
+            }
         }
-        finally { image.Dispose(); }
+        finally
+        {
+            image.Dispose();
+        }
     }
 }

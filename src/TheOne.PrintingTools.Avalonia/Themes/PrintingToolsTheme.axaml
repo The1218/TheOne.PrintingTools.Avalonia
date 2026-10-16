@@ -1,9 +1,15 @@
-<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:TheOne.PrintingTools.Avalonia" x:Class="TheOne.PrintingTools.Avalonia.PrintingToolsTheme">
-  <Styles.Resources>
-    <ResourceDictionary>
-      <ResourceDictionary.MergedDictionaries><local:PrintResources /></ResourceDictionary.MergedDictionaries>
-    </ResourceDictionary>
-  </Styles.Resources>
-  <FluentTheme />
-  <local:PrintStyles />
+<Styles
+    x:Class="TheOne.PrintingTools.Avalonia.PrintingToolsTheme"
+    xmlns="https://github.com/avaloniaui"
+    xmlns:local="using:TheOne.PrintingTools.Avalonia"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Styles.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <local:PrintResources />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+    <FluentTheme />
+    <local:PrintStyles />
 </Styles>

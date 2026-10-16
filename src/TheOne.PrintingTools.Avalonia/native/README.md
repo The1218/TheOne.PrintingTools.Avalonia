@@ -1,6 +1,7 @@
 # macOS bridge maintenance
 
-`TheOnePrinting.m` is an original AppKit / PDFKit bridge. Consumers use prebuilt runtime assets; they must not compile this source. The two runtime directories contain the same universal x64 + arm64 library, targeting macOS 14 or later.
+`TheOnePrinting.m` is an original AppKit / PDFKit bridge. Consumers use prebuilt runtime assets; they must not compile
+this source. The two runtime directories contain the same universal x64 + arm64 library, targeting macOS 14 or later.
 
 From the repository root, maintainers can rebuild with the same Xcode toolchain and SDK:
 
@@ -16,4 +17,6 @@ cp src/TheOne.PrintingTools.Avalonia/runtimes/osx-arm64/native/libTheOnePrinting
    src/TheOne.PrintingTools.Avalonia/runtimes/osx-x64/native/libTheOnePrinting.dylib
 ```
 
-Inspect architectures, dependencies and exported symbols before packing. Re-run the package-consumer smoke after changing this ABI. Application signing / notarization must include the bundled library according to the application's distribution requirements. No runtime download or external PrintingTools native binary is used.
+Inspect architectures, dependencies and exported symbols before packing. Re-run the package-consumer smoke after
+changing this ABI. Application signing / notarization must include the bundled library according to the application's
+distribution requirements. No runtime download or external PrintingTools native binary is used.

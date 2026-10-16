@@ -1,33 +1,33 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <!-- Package-owned palette; no host or sibling repository resources are required. -->
-  <ResourceDictionary.ThemeDictionaries>
-    <ResourceDictionary x:Key="Light">
-      <SolidColorBrush x:Key="PrintingTools.Accent" Color="#006061" />
-      <SolidColorBrush x:Key="PrintingTools.AccentHover" Color="#006A6B" />
-      <SolidColorBrush x:Key="PrintingTools.AccentPressed" Color="#007475" />
-      <SolidColorBrush x:Key="PrintingTools.AccentSoft" Color="#C1DCDC" />
-      <SolidColorBrush x:Key="PrintingTools.Line" Color="#D2D5D5" />
-      <SolidColorBrush x:Key="PrintingTools.Muted" Color="#474D4D" />
-      <SolidColorBrush x:Key="PrintingTools.OnAccent" Color="#F7F8F8" />
-      <SolidColorBrush x:Key="PrintingTools.Success" Color="#007A06" />
-      <SolidColorBrush x:Key="PrintingTools.Surface" Color="#FFFFFF" />
-      <SolidColorBrush x:Key="PrintingTools.SurfaceHover" Color="#F2F2F2" />
-      <SolidColorBrush x:Key="PrintingTools.SurfacePressed" Color="#EDEDED" />
-      <SolidColorBrush x:Key="PrintingTools.Text" Color="#212222" />
-    </ResourceDictionary>
-    <ResourceDictionary x:Key="Dark">
-      <SolidColorBrush x:Key="PrintingTools.Accent" Color="#63D9DE" />
-      <SolidColorBrush x:Key="PrintingTools.AccentHover" Color="#5DD2D5" />
-      <SolidColorBrush x:Key="PrintingTools.AccentPressed" Color="#55CBCE" />
-      <SolidColorBrush x:Key="PrintingTools.AccentSoft" Color="#284343" />
-      <SolidColorBrush x:Key="PrintingTools.Line" Color="#3D4242" />
-      <SolidColorBrush x:Key="PrintingTools.Muted" Color="#CACECE" />
-      <SolidColorBrush x:Key="PrintingTools.OnAccent" Color="#181B1B" />
-      <SolidColorBrush x:Key="PrintingTools.Success" Color="#57D15D" />
-      <SolidColorBrush x:Key="PrintingTools.Surface" Color="#0F0F0F" />
-      <SolidColorBrush x:Key="PrintingTools.SurfaceHover" Color="#212222" />
-      <SolidColorBrush x:Key="PrintingTools.SurfacePressed" Color="#282929" />
-      <SolidColorBrush x:Key="PrintingTools.Text" Color="#F2F2F2" />
-    </ResourceDictionary>
-  </ResourceDictionary.ThemeDictionaries>
+    <!--  Package-owned palette; no host or sibling repository resources are required.  -->
+    <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+            <SolidColorBrush Color="#006061" x:Key="PrintingTools.Accent" />
+            <SolidColorBrush Color="#006A6B" x:Key="PrintingTools.AccentHover" />
+            <SolidColorBrush Color="#007475" x:Key="PrintingTools.AccentPressed" />
+            <SolidColorBrush Color="#C1DCDC" x:Key="PrintingTools.AccentSoft" />
+            <SolidColorBrush Color="#D2D5D5" x:Key="PrintingTools.Line" />
+            <SolidColorBrush Color="#474D4D" x:Key="PrintingTools.Muted" />
+            <SolidColorBrush Color="#F7F8F8" x:Key="PrintingTools.OnAccent" />
+            <SolidColorBrush Color="#007A06" x:Key="PrintingTools.Success" />
+            <SolidColorBrush Color="#FFFFFF" x:Key="PrintingTools.Surface" />
+            <SolidColorBrush Color="#F2F2F2" x:Key="PrintingTools.SurfaceHover" />
+            <SolidColorBrush Color="#EDEDED" x:Key="PrintingTools.SurfacePressed" />
+            <SolidColorBrush Color="#212222" x:Key="PrintingTools.Text" />
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+            <SolidColorBrush Color="#63D9DE" x:Key="PrintingTools.Accent" />
+            <SolidColorBrush Color="#5DD2D5" x:Key="PrintingTools.AccentHover" />
+            <SolidColorBrush Color="#55CBCE" x:Key="PrintingTools.AccentPressed" />
+            <SolidColorBrush Color="#284343" x:Key="PrintingTools.AccentSoft" />
+            <SolidColorBrush Color="#3D4242" x:Key="PrintingTools.Line" />
+            <SolidColorBrush Color="#CACECE" x:Key="PrintingTools.Muted" />
+            <SolidColorBrush Color="#181B1B" x:Key="PrintingTools.OnAccent" />
+            <SolidColorBrush Color="#57D15D" x:Key="PrintingTools.Success" />
+            <SolidColorBrush Color="#0F0F0F" x:Key="PrintingTools.Surface" />
+            <SolidColorBrush Color="#212222" x:Key="PrintingTools.SurfaceHover" />
+            <SolidColorBrush Color="#282929" x:Key="PrintingTools.SurfacePressed" />
+            <SolidColorBrush Color="#F2F2F2" x:Key="PrintingTools.Text" />
+        </ResourceDictionary>
+    </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

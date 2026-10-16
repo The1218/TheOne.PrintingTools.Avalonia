@@ -1,9 +1,12 @@
-using global::Avalonia.Markup.Xaml;
-using global::Avalonia.Styling;
+using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 
 namespace TheOne.PrintingTools.Avalonia;
 
-internal sealed partial class PrintStyles : Styles
+internal sealed class PrintStyles : Styles
 {
-    public PrintStyles() => AvaloniaXamlLoader.Load(this);
+    public PrintStyles()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
 }

@@ -1,9 +1,12 @@
-using global::Avalonia.Controls;
-using global::Avalonia.Markup.Xaml;
+using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 
 namespace TheOne.PrintingTools.Avalonia;
 
-internal sealed partial class PrintResources : ResourceDictionary
+internal sealed class PrintResources : ResourceDictionary
 {
-    public PrintResources() => AvaloniaXamlLoader.Load(this);
+    public PrintResources()
+    {
+        AvaloniaXamlLoader.Load(this);
+    }
 }

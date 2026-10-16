@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using SkiaSharp;
+using TheOne.PrintingTools.Avalonia.Platforms;
 
 namespace TheOne.PrintingTools.Avalonia;
 
@@ -9,18 +10,22 @@ internal sealed partial class PdfPrintDocument : IDisposable
 {
     private static readonly object Gate = new();
     private static bool _initialized;
+    private readonly PrintPaper _paper;
+    private readonly (double Width, double Height)[] _sizes;
     private GCHandle _bytes;
     private IntPtr _document;
-    private readonly (double Width, double Height)[] _sizes;
-    private readonly PrintPaper _paper;
-    ~PdfPrintDocument() => Dispose();
 
     private PdfPrintDocument(byte[] bytes, CancellationToken token)
     {
         lock (Gate)
         {
-            Platforms.NativeLibraries.Initialize();
-            if (!_initialized) { FPDF_InitLibrary(); _initialized = true; }
+            NativeLibraries.Initialize();
+            if (!_initialized)
+            {
+                FPDF_InitLibrary();
+                _initialized = true;
+            }
+
             _bytes = GCHandle.Alloc(bytes, GCHandleType.Pinned);
             try
             {
@@ -37,11 +42,36 @@ internal sealed partial class PdfPrintDocument : IDisposable
                         throw new PrintException($"无法读取 PDF 第 {page + 1} 页的尺寸。");
                     _sizes[page] = (width, height);
                 }
+
                 _paper = new PrintPaper("PDF", _sizes[0].Width * 25.4 / 72, _sizes[0].Height * 25.4 / 72);
                 PrintLayout.ValidatePaper(_paper);
             }
-            catch { Dispose(); throw; }
+            catch
+            {
+                Dispose();
+                throw;
+            }
         }
+    }
+
+    public void Dispose()
+    {
+        lock (Gate)
+        {
+            if (_document != IntPtr.Zero)
+            {
+                FPDF_CloseDocument(_document);
+                _document = IntPtr.Zero;
+            }
+
+            if (_bytes.IsAllocated) _bytes.Free();
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    ~PdfPrintDocument()
+    {
+        Dispose();
     }
 
     internal static PrintDocument Create(string title, byte[] bytes, CancellationToken token)
@@ -58,23 +88,26 @@ internal sealed partial class PdfPrintDocument : IDisposable
             ObjectDisposedException.ThrowIf(_document == IntPtr.Zero, this);
             var (width, height) = _sizes[index];
             // 300 DPI for normal pages; bound unusually large pages to 16M pixels / 8192 per edge.
-            var rasterScale = Math.Min(300d / 72, Math.Min(8192 / Math.Max(width, height), Math.Sqrt(16_000_000 / (width * height))));
+            var rasterScale = Math.Min(300d / 72,
+                Math.Min(8192 / Math.Max(width, height), Math.Sqrt(16_000_000 / (width * height))));
             var pixelWidth = Math.Max(1, (int)Math.Floor(width * rasterScale));
             var pixelHeight = Math.Max(1, (int)Math.Floor(height * rasterScale));
             using var bitmap = new SKBitmap(pixelWidth, pixelHeight, SKColorType.Bgra8888, SKAlphaType.Opaque);
             var page = FPDF_LoadPage(_document, index);
             if (page == IntPtr.Zero) throw new PrintException($"无法加载 PDF 第 {index + 1} 页。");
-            IntPtr pdfBitmap = IntPtr.Zero;
+            var pdfBitmap = IntPtr.Zero;
             try
             {
                 pdfBitmap = FPDFBitmap_CreateEx(pixelWidth, pixelHeight, 4, bitmap.GetPixels(), bitmap.RowBytes);
                 if (pdfBitmap == IntPtr.Zero) throw new PrintException("无法创建 PDF 页面位图。");
                 FPDFBitmap_FillRect(pdfBitmap, 0, 0, pixelWidth, pixelHeight, 0xFFFFFFFF);
-                FPDF_RenderPageBitmap(pdfBitmap, page, 0, 0, pixelWidth, pixelHeight, 0, 0x801); // annotations + printing
+                FPDF_RenderPageBitmap(pdfBitmap, page, 0, 0, pixelWidth, pixelHeight, 0,
+                    0x801); // annotations + printing
                 var targetWidth = _paper.WidthMm * 72 / 25.4;
                 var targetHeight = _paper.HeightMm * 72 / 25.4;
                 var fit = Math.Min(targetWidth / width, targetHeight / height);
-                var left = (targetWidth - width * fit) / 2; var top = (targetHeight - height * fit) / 2;
+                var left = (targetWidth - width * fit) / 2;
+                var top = (targetHeight - height * fit) / 2;
                 using var paint = new SKPaint { IsAntialias = true };
                 canvas.DrawBitmap(bitmap, new SKRect((float)left, (float)top,
                     (float)(left + width * fit), (float)(top + height * fit)), paint);
@@ -87,25 +120,38 @@ internal sealed partial class PdfPrintDocument : IDisposable
         }
     }
 
-    public void Dispose()
-    {
-        lock (Gate)
-        {
-            if (_document != IntPtr.Zero) { FPDF_CloseDocument(_document); _document = IntPtr.Zero; }
-            if (_bytes.IsAllocated) _bytes.Free();
-            GC.SuppressFinalize(this);
-        }
-    }
+    [LibraryImport("pdfium")]
+    private static partial void FPDF_InitLibrary();
 
-    [LibraryImport("pdfium")] private static partial void FPDF_InitLibrary();
-    [LibraryImport("pdfium")] private static partial IntPtr FPDF_LoadMemDocument64(IntPtr data, nuint length, IntPtr password);
-    [LibraryImport("pdfium")] private static partial int FPDF_GetPageCount(IntPtr document);
-    [LibraryImport("pdfium")] private static partial int FPDF_GetPageSizeByIndex(IntPtr document, int page, out double width, out double height);
-    [LibraryImport("pdfium")] private static partial IntPtr FPDF_LoadPage(IntPtr document, int page);
-    [LibraryImport("pdfium")] private static partial void FPDF_ClosePage(IntPtr page);
-    [LibraryImport("pdfium")] private static partial void FPDF_CloseDocument(IntPtr document);
-    [LibraryImport("pdfium")] private static partial IntPtr FPDFBitmap_CreateEx(int width, int height, int format, IntPtr pixels, int stride);
-    [LibraryImport("pdfium")] private static partial void FPDFBitmap_FillRect(IntPtr bitmap, int left, int top, int width, int height, uint color);
-    [LibraryImport("pdfium")] private static partial void FPDF_RenderPageBitmap(IntPtr bitmap, IntPtr page, int x, int y, int width, int height, int rotate, int flags);
-    [LibraryImport("pdfium")] private static partial void FPDFBitmap_Destroy(IntPtr bitmap);
+    [LibraryImport("pdfium")]
+    private static partial IntPtr FPDF_LoadMemDocument64(IntPtr data, nuint length, IntPtr password);
+
+    [LibraryImport("pdfium")]
+    private static partial int FPDF_GetPageCount(IntPtr document);
+
+    [LibraryImport("pdfium")]
+    private static partial int FPDF_GetPageSizeByIndex(IntPtr document, int page, out double width, out double height);
+
+    [LibraryImport("pdfium")]
+    private static partial IntPtr FPDF_LoadPage(IntPtr document, int page);
+
+    [LibraryImport("pdfium")]
+    private static partial void FPDF_ClosePage(IntPtr page);
+
+    [LibraryImport("pdfium")]
+    private static partial void FPDF_CloseDocument(IntPtr document);
+
+    [LibraryImport("pdfium")]
+    private static partial IntPtr FPDFBitmap_CreateEx(int width, int height, int format, IntPtr pixels, int stride);
+
+    [LibraryImport("pdfium")]
+    private static partial void
+        FPDFBitmap_FillRect(IntPtr bitmap, int left, int top, int width, int height, uint color);
+
+    [LibraryImport("pdfium")]
+    private static partial void FPDF_RenderPageBitmap(IntPtr bitmap, IntPtr page, int x, int y, int width, int height,
+        int rotate, int flags);
+
+    [LibraryImport("pdfium")]
+    private static partial void FPDFBitmap_Destroy(IntPtr bitmap);
 }
